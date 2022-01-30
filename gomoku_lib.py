@@ -84,7 +84,7 @@ class Gomoku:
 
     def put(self, x: int, y: int) -> bool:
         try:
-            x_byte, y_byte = bytes(x), bytes(y)
+            x_byte, y_byte = bytes([x]), bytes([y])
             x_byte = x_byte << 4
             xy_byte = x_byte | y_byte
             self.send(3, 0, int(xy_byte))
