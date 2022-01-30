@@ -31,7 +31,7 @@ class Gomoku:
 
     def send(self, cmd: int, turn: int, data: int) -> bool:
         try:
-            self.socket.send(bytearray(bytes([cmd]), bytes([turn]), bytes([data])))
+            self.socket.send(bytes([cmd, turn, data]))
             return True
         except Exception:
             return False
