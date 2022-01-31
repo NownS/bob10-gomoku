@@ -23,7 +23,10 @@ gomoku_map = [[-1 for i in range(15)] for i in range(15)]
 
 
 def column(matrix, i):
-    return [row[i] for row in matrix]
+    ret = []
+    for row in matrix:
+        ret.append(row[i])
+    return ret
 
 
 def diagonal(matrix, x, y):
@@ -75,7 +78,7 @@ def someone_win(x_idx, y_idx, color_id):
                 id = length_list.index(5)
                 return True
             except ValueError:
-                return False
+                continue
         else:
             if length_list and max(length_list) >= 5:
                 return True
