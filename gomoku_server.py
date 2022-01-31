@@ -73,10 +73,11 @@ def someone_win(x_idx, y_idx, color_id):
         if color_id == BLACK:
             try:
                 id = length_list.index(5)
-            except ValueError:
                 return True
+            except ValueError:
+                return False
         else:
-            if max(length_list) >= 5:
+            if length_list and max(length_list) >= 5:
                 return True
 
     return False
@@ -189,7 +190,7 @@ while True:
                         turn_status[1] = 1
                         i = 0
                         for sock in connectionSocket_list:
-                            sock.send(CMD_UPDATE, color_status[i], 0)
+                            sock.send(make_bytes(CMD_UPDATE, color_status[i], 0))
                             i += 1
                         start = time.time()
             continue
@@ -232,7 +233,7 @@ while True:
                     id = connectionSocket_list.index(ir)
                 except ValueError:
                     id = -1
-                if turn_status(id) == 1:
+                if turn_status[id] == 1:
                     ready_status = [0, 0]
                     connectionSocket_list.remove(ir)
                     ir.send(make_bytes(CMD_END, 0, 0))
