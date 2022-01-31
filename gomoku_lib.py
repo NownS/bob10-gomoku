@@ -1,5 +1,7 @@
 from socket import *
 from typing import Tuple
+import sys
+print = sys.stdout.write
 
 class Gomoku:
 
@@ -84,16 +86,18 @@ class Gomoku:
 
     def put(self, x: int, y: int) -> bool:
         try:
-            x_byte, y_byte = bytes([x]), bytes([y])
-            x_byte = x_byte << 4
-            xy_byte = x_byte | y_byte
-            self.send(3, 0, int(xy_byte))
+            x_byte = x << 4
+            xy_byte = x_byte + y
+            ret = self.send(3, 0, xy_byte)
+            if not ret:
+                raise Exception("send error")
             if self.print_mode:
                 print("put {}, {}".format(x, y))
             return True
         except Exception as e:
             if self.print_mode:
                 print("{} exception during put".format(e))
+            return False
 
 
     def update_or_end(self) -> Tuple[bool, int, int, bytes]:
