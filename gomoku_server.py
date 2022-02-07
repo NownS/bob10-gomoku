@@ -186,8 +186,7 @@ while True:
                         input_list.remove(ir)
                 
                 elif cmd == CMD_READY:
-                    ready_status[id] = data
-                    print("Ready" + str(bool(data)))
+                    ready_status[id] = datah
                     if sum(ready_status) == 2:
                         is_start = True
                         turn_status[1] = 1
@@ -231,7 +230,6 @@ while True:
             cmd, turn, data = int(msg[0]), int(msg[1]), int(msg[2])
 
             if cmd == CMD_PUT:
-                print("put")
                 try:
                     id = connectionSocket_list.index(ir)
                 except ValueError:
