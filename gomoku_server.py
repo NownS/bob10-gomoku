@@ -186,7 +186,7 @@ while True:
                         input_list.remove(ir)
                 
                 elif cmd == CMD_READY:
-                    ready_status[id] = datah
+                    ready_status[id] = data
                     if sum(ready_status) == 2:
                         is_start = True
                         turn_status[1] = 1
