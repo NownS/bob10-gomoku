@@ -19,7 +19,7 @@ WHITE = 1
 BLACK = 0
 BLANK = -1
 
-gomoku_map = [[-1 for i in range(15)] for i in range(15)]
+gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
 
 
 def column(matrix, i):
@@ -55,6 +55,107 @@ def diagonal(matrix, x, y):
 
 
 def find_cannot_place(x_idx, y_idx, color_id):
+    if color_id == BLACK:
+        
+        ROW, COL, DIAG_1, DIAG_2 = 0, 1, 2, 3
+
+        last_point = [[] for _ in range(4)]
+
+        len_stone = [-1 for _ in range(4)]
+
+        i, j = x_idx, y_idx
+        while -1 < i < 15 and gomoku_map[i][j] == color_id:
+            len_stone[ROW] += 1
+            i -= 1
+        last_point[ROW].append((i, j))
+
+        i, j = x_idx, y_idx
+        while -1 < i < 15 and gomoku_map[i][j] == color_id:
+            len_stone[ROW] += 1
+            i += 1
+        last_point[ROW].append((i, j))
+        
+        i, j = x_idx, y_idx
+        while -1 < j < 15 and gomoku_map[i][j] == color_id:
+            len_stone[COL] += 1
+            j -= 1
+        last_point[COL].append((i, j))
+
+        i, j = x_idx, y_idx
+        while -1 < j < 15 and gomoku_map[i][j] == color_id:
+            len_stone[COL] += 1
+            j += 1
+        last_point[COL].append((i, j))
+        
+        i, j = x_idx, y_idx
+        while -1 < j < 15 and -1 < i < 15 and gomoku_map[i][j] == color_id:
+            len_stone[DIAG_1] += 1
+            j -= 1
+            i -= 1
+        last_point[DIAG_1].append((i,j))
+        
+        i, j = x_idx, y_idx
+        while -1 < j < 15 and -1 < i < 15 and gomoku_map[i][j] == color_id:
+            len_stone[DIAG_1] += 1
+            j += 1
+            i += 1
+        last_point[DIAG_1].append((i,j))
+        
+        i, j = x_idx, y_idx
+        while -1 < j < 15 and -1 < i < 15 and gomoku_map[i][j] == color_id:
+            len_stone[DIAG_2] += 1
+            j += 1
+            i -= 1
+        last_point[DIAG_2].append((i,j))
+        
+        i, j = x_idx, y_idx
+        while -1 < j < 15 and -1 < i < 15 and gomoku_map[i][j] == color_id:
+            len_stone[DIAG_2] += 1
+            j -= 1
+            i += 1
+        last_point[DIAG_2].append((i,j))
+
+        check_3_idx = []
+        check_4_idx = []
+
+        for idx in range(4):
+            if len_stone[idx] == 3:
+                check_3_idx.append(idx)
+            elif len_stone[idx] == 4:
+                check_4_idx.append(idx)
+        
+        if len(check_3_idx) >= 2:
+            count_3 = 0
+            for idx in check_3_idx:
+                blocked = False
+                for x, y in last_point[idx]:
+                    if 0 <= x <= 14 and 0 <= y <= 14 and gomoku_map[x][y] == -1:
+                        continue
+                    else:
+                        blocked = True
+                        break
+                if not blocked:
+                    count_3 += 1
+
+            if count_3 >= 2:
+                return True
+
+        if len(check_4_idx) >= 2:
+            count_4 = 0
+            for idx in check_4_idx:
+                blocked = False
+                for x, y in last_point[idx]:
+                    if 0 <= x <= 14 and 0 <= y <= 14 and gomoku_map[x][y] == -1:
+                        continue
+                    else:
+                        blocked = True
+                        break
+                if not blocked:
+                    count_4 += 1
+            
+            if count_4 >= 2:
+                return True
+
     return False
 
 
@@ -187,6 +288,7 @@ while True:
                 
                 elif cmd == CMD_READY:
                     ready_status[id] = data
+                    print("Ready" + str(bool(data)))
                     if sum(ready_status) == 2:
                         is_start = True
                         turn_status[1] = 1
@@ -230,6 +332,7 @@ while True:
             cmd, turn, data = int(msg[0]), int(msg[1]), int(msg[2])
 
             if cmd == CMD_PUT:
+                print("put")
                 try:
                     id = connectionSocket_list.index(ir)
                 except ValueError:
