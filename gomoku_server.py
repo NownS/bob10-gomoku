@@ -238,106 +238,184 @@ turn_status = [0, 0]
 color_status = (0, 1)
 
 while True:
-    input_ready, write_ready, except_ready = select(input_list, [], [])
-    for ir in input_ready:
-        
-        if ir == sys.stdin:
-            junk = sys.stdin.readline()
-        
-        if not is_start:                                                    # before start
-            if ir == serverSocket:
-                (connectionSocket, clientAddress) = serverSocket.accept()
-                input_list.append(connectionSocket)
-                print("connection: ", connectionSocket, clientAddress)
+    try:
+
+        input_ready, write_ready, except_ready = select(input_list, [], [])
+        for ir in input_ready:
             
+            if ir == sys.stdin:
+                junk = sys.stdin.readline()
+            
+            if not is_start:                                                    # before start
+                if ir == serverSocket:
+                    (connectionSocket, clientAddress) = serverSocket.accept()
+                    input_list.append(connectionSocket)
+                    print("connection: ", connectionSocket, clientAddress)
+                
+                else:
+                    msg = ir.recv(BUF_SIZE)
+
+                    if not msg:
+                        try:
+                            id = connectionSocket_list.index(ir)
+                        except ValueError:
+                            id = -1
+                        if id != -1:
+                            ready_status[id] = 0
+                            connectionSocket_list.remove(ir)
+                        ir.close()
+                        input_list.remove(ir)
+                        continue
+
+                    cmd, turn, data = int(msg[0]), int(msg[1]), int(msg[2])
+                    try:
+                        id = connectionSocket_list.index(ir)
+                    except ValueError:
+                        id = -1
+                    if id == -1:
+                        if cmd == CMD_CONNECT:
+                            print("connect")
+                            if len(connectionSocket_list) >= MAX_CLIENT_LENGTH:
+                                print("server is full")
+                                ir.send(make_bytes(CMD_CONNECT, 2, 2))
+                                ir.close()
+                                input_list.remove(ir)
+                            else:
+                                ir.send(make_bytes(CMD_CONNECT, len(connectionSocket_list), 1))
+                                connectionSocket_list.append(ir)
+                        else:
+                            ir.send(make_bytes(CMD_CONNECT, 2, 2))
+                            ir.close()
+                            input_list.remove(ir)
+                    
+                    elif cmd == CMD_READY:
+                        ready_status[id] = data
+                        print("Ready" + str(bool(data)))
+                        if sum(ready_status) == 2:
+                            is_start = True
+                            turn_status[1] = 1
+                            i = 0
+                            for sock in connectionSocket_list:
+                                sock.send(make_bytes(CMD_UPDATE, color_status[i], 0))
+                                i += 1
+                            start = time.time()
+                continue
+            
+            if ir == sys.stdin:                                         # after start
+                junk = sys.stdin.readline
+            
+            elif ir == serverSocket:
+                (connectionSocket, clientAddress) = serverSocket.accept()
+                connectionSocket.send(make_bytes(CMD_CONNECT, 2, 2))
+                connectionSocket.close()
+                
             else:
                 msg = ir.recv(BUF_SIZE)
-
+                
                 if not msg:
                     try:
                         id = connectionSocket_list.index(ir)
                     except ValueError:
                         id = -1
                     if id != -1:
-                        ready_status[id] = 0
+                        ready_status = [0, 0]
                         connectionSocket_list.remove(ir)
-                    ir.close()
-                    input_list.remove(ir)
+                        ir.close()
+                        input_list.remove(ir)
+                        for sock in connectionSocket_list:
+                            sock.send(make_bytes(CMD_END, 1, 0))
+                            sock.close()
+                            input_list.remove(sock)
+                    else:
+                        ir.close()
+                        input_list.remove(ir)
                     continue
 
                 cmd, turn, data = int(msg[0]), int(msg[1]), int(msg[2])
-                try:
-                    id = connectionSocket_list.index(ir)
-                except ValueError:
-                    id = -1
-                if id == -1:
-                    if cmd == CMD_CONNECT:
-                        print("connect")
-                        if len(connectionSocket_list) >= MAX_CLIENT_LENGTH:
-                            print("server is full")
-                            ir.send(make_bytes(CMD_CONNECT, 2, 2))
-                            ir.close()
-                            input_list.remove(ir)
-                        else:
-                            ir.send(make_bytes(CMD_CONNECT, len(connectionSocket_list), 1))
-                            connectionSocket_list.append(ir)
-                    else:
-                        ir.send(make_bytes(CMD_CONNECT, 2, 2))
+
+                if cmd == CMD_PUT:
+                    print("put")
+                    try:
+                        id = connectionSocket_list.index(ir)
+                    except ValueError:
+                        id = -1
+                    if turn_status[id] == 1:
+                        ready_status = [0, 0]
+                        connectionSocket_list.remove(ir)
+                        ir.send(make_bytes(CMD_END, 0, 0))
                         ir.close()
                         input_list.remove(ir)
-                
-                elif cmd == CMD_READY:
-                    ready_status[id] = data
-                    print("Ready" + str(bool(data)))
-                    if sum(ready_status) == 2:
-                        is_start = True
-                        turn_status[1] = 1
-                        i = 0
                         for sock in connectionSocket_list:
-                            sock.send(make_bytes(CMD_UPDATE, color_status[i], 0))
-                            i += 1
-                        start = time.time()
-            continue
-        
-        if ir == sys.stdin:                                         # after start
-            junk = sys.stdin.readline
-        
-        elif ir == serverSocket:
-            (connectionSocket, clientAddress) = serverSocket.accept()
-            connectionSocket.send(make_bytes(CMD_CONNECT, 2, 2))
-            connectionSocket.close()
-            
-        else:
-            msg = ir.recv(BUF_SIZE)
-            
-            if not msg:
-                try:
-                    id = connectionSocket_list.index(ir)
-                except ValueError:
-                    id = -1
-                if id != -1:
-                    ready_status = [0, 0]
-                    connectionSocket_list.remove(ir)
-                    ir.close()
-                    input_list.remove(ir)
-                    for sock in connectionSocket_list:
-                        sock.send(make_bytes(CMD_END, 1, 0))
-                        sock.close()
-                        input_list.remove(sock)
+                            sock.send(make_bytes(CMD_END, 1, 0))
+                            sock.close()
+                            input_list.remove(sock)
+                        is_start = False
+                        connectionSocket_list = []
+                        ready_status = [0, 0]
+                        turn_status = [0, 0]
+                        gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
+
+                    else:
+                        end = time.time()    
+                        x = data >> 4
+                        y = data & 0b00001111
+                        if math.floor(end - start) > 15:
+                            ret = 3
+                        else:
+                            ret = put(color_status[id], x, y)
+                        
+                        if ret == 1:    # error
+                            data_id = make_bytes(CMD_END, 0, 0)
+                            data_not_id = make_bytes(CMD_END, 1, 0)
+                            connectionSocket_list[id].send(data_id)
+                            connectionSocket_list[int(not id)].send(data_not_id)
+                            for sock in connectionSocket_list:
+                                sock.close()
+                                input_list.remove(sock)
+                            connectionSocket_list = []
+                            is_start = False
+                            ready_status = [0, 0]
+                            turn_status = [0, 0]
+                            gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
+
+                        elif ret == 2:  # win
+                            data_not_id = make_bytes(CMD_END, 0, data)
+                            data_id = make_bytes(CMD_END, 1, data)
+                            connectionSocket_list[id].send(data_id)
+                            connectionSocket_list[int(not id)].send(data_not_id)
+                            for sock in connectionSocket_list:
+                                sock.close()
+                                input_list.remove(sock)
+                            connectionSocket_list = []
+                            is_start = False
+                            ready_status = [0, 0]
+                            turn_status = [0, 0]
+                            gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
+
+                        elif ret == 3:  # time out
+                            data_id = make_bytes(CMD_END, 0, 1)
+                            data_not_id = make_bytes(CMD_END, 1, 1)
+                            connectionSocket_list[id].send(data_id)
+                            connectionSocket_list[int(not id)].send(data_not_id)
+                            for sock in connectionSocket_list:
+                                sock.close()
+                                input_list.remove(sock)
+                            connectionSocket_list = []
+                            is_start = False
+                            ready_status = [0, 0]
+                            turn_status = [0, 0]
+                            gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
+
+                        else:           # good
+                            turn_status[0], turn_status[1] = turn_status[1], turn_status[0]
+                            data0 = make_bytes(CMD_UPDATE, turn_status[0], data)
+                            data1 = make_bytes(CMD_UPDATE, turn_status[1], data)
+                            connectionSocket_list[0].send(data0)
+                            connectionSocket_list[1].send(data1)
+
+                    start = time.time()
+
                 else:
-                    ir.close()
-                    input_list.remove(ir)
-                continue
-
-            cmd, turn, data = int(msg[0]), int(msg[1]), int(msg[2])
-
-            if cmd == CMD_PUT:
-                print("put")
-                try:
-                    id = connectionSocket_list.index(ir)
-                except ValueError:
-                    id = -1
-                if turn_status[id] == 1:
                     ready_status = [0, 0]
                     connectionSocket_list.remove(ir)
                     ir.send(make_bytes(CMD_END, 0, 0))
@@ -347,59 +425,20 @@ while True:
                         sock.send(make_bytes(CMD_END, 1, 0))
                         sock.close()
                         input_list.remove(sock)
-
-                else:
-                    end = time.time()    
-                    x = data >> 4
-                    y = data & 0b00001111
-                    if math.floor(end - start) > 15:
-                        ret = 3
-                    else:
-                        ret = put(color_status[id], x, y)
                     
-                    if ret == 1:    # error
-                        data_id = make_bytes(CMD_END, 0, 0)
-                        data_not_id = make_bytes(CMD_END, 1, 0)
-                        connectionSocket_list[id].send(data_id)
-                        connectionSocket_list[int(not id)].send(data_not_id)
-                        for sock in connectionSocket_list:
-                            sock.close()
-                            input_list.remove(sock)
+                    connectionSocket_list = []
+                    is_start = False
+                    ready_status = [0, 0]
+                    turn_status = [0, 0]
+                    gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
 
-                    elif ret == 2:  # win
-                        data_not_id = make_bytes(CMD_END, 0, data)
-                        data_id = make_bytes(CMD_END, 1, data)
-                        connectionSocket_list[id].send(data_id)
-                        connectionSocket_list[int(not id)].send(data_not_id)
-                        for sock in connectionSocket_list:
-                            sock.close()
-                            input_list.remove(sock)
-
-                    elif ret == 3:  # time out
-                        data_id = make_bytes(CMD_END, 0, 1)
-                        data_not_id = make_bytes(CMD_END, 1, 1)
-                        connectionSocket_list[id].send(data_id)
-                        connectionSocket_list[int(not id)].send(data_not_id)
-                        for sock in connectionSocket_list:
-                            sock.close()
-                            input_list.remove(sock)
-
-                    else:           # good
-                        turn_status[0], turn_status[1] = turn_status[1], turn_status[0]
-                        data0 = make_bytes(CMD_UPDATE, turn_status[0], data)
-                        data1 = make_bytes(CMD_UPDATE, turn_status[1], data)
-                        connectionSocket_list[0].send(data0)
-                        connectionSocket_list[1].send(data1)
-
-                start = time.time()
-
-            else:
-                ready_status = [0, 0]
-                connectionSocket_list.remove(ir)
-                ir.send(make_bytes(CMD_END, 0, 0))
+    except:
+        for ir in input_ready:
+            if ir != serverSocket:
                 ir.close()
-                input_list.remove(ir)
-                for sock in connectionSocket_list:
-                    sock.send(make_bytes(CMD_END, 1, 0))
-                    sock.close()
-                    input_list.remove(sock)
+        input_list = [serverSocket]
+        connectionSocket_list = []
+        is_start = False
+        ready_status = [0, 0]
+        turn_status = [0, 0]
+        gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
