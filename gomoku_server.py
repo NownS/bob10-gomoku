@@ -360,10 +360,13 @@ while True:
                         end = time.time()    
                         x = data >> 4
                         y = data & 0b00001111
-                        if math.floor(end - start) > 15:
+                        if math.floor(end - start) >= 15:
                             ret = 3
                         else:
                             ret = put(color_status[id], x, y)
+                        
+                        if math.floor(end - start) < 3:
+                            time.sleep(3 - (end - start))
                         
                         if ret == 1:    # error
                             data_id = make_bytes(CMD_END, 0, 0)
