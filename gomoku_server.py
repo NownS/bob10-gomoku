@@ -198,10 +198,10 @@ def put(color_id, x, y):
     if gomoku_map[x_idx][y_idx] != -1:
         return 1
 
+    gomoku_map[x_idx][y_idx] = color_id
+
     if find_cannot_place(x_idx, y_idx, color_id):
         return 1
-    
-    gomoku_map[x_idx][y_idx] = color_id
 
     if someone_win(x_idx, y_idx, color_id):
         return 2
