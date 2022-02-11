@@ -19,6 +19,8 @@ WHITE = 1
 BLACK = 0
 BLANK = -1
 
+stone_cnt = 0
+
 gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
 
 
@@ -334,7 +336,6 @@ while True:
                 cmd, turn, data = int(msg[0]), int(msg[1]), int(msg[2])
 
                 if cmd == CMD_PUT:
-                    print("put")
                     try:
                         id = connectionSocket_list.index(ir)
                     except ValueError:
@@ -377,6 +378,8 @@ while True:
                             ready_status = [0, 0]
                             turn_status = [0, 0]
                             gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
+                            print("Stone Count : ", stone_cnt)
+                            stone_cnt = 0
 
                         elif ret == 2:  # win
                             data_not_id = make_bytes(CMD_END, 0, data)
@@ -391,6 +394,8 @@ while True:
                             ready_status = [0, 0]
                             turn_status = [0, 0]
                             gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
+                            print("Stone Count : ", stone_cnt)
+                            stone_cnt = 0
 
                         elif ret == 3:  # time out
                             data_id = make_bytes(CMD_END, 0, 1)
@@ -405,6 +410,8 @@ while True:
                             ready_status = [0, 0]
                             turn_status = [0, 0]
                             gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
+                            print("Stone Count : ", stone_cnt)
+                            stone_cnt = 0
 
                         else:           # good
                             turn_status[0], turn_status[1] = turn_status[1], turn_status[0]
@@ -412,7 +419,9 @@ while True:
                             data1 = make_bytes(CMD_UPDATE, turn_status[1], data)
                             connectionSocket_list[0].send(data0)
                             connectionSocket_list[1].send(data1)
-
+                            
+                            stone_cnt += 1
+                            
                     start = time.time()
 
                 else:
@@ -431,6 +440,8 @@ while True:
                     ready_status = [0, 0]
                     turn_status = [0, 0]
                     gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
+                    print("Stone Count : ", stone_cnt)
+                    stone_cnt = 0
 
     except:
         for ir in input_ready:
@@ -442,3 +453,5 @@ while True:
         ready_status = [0, 0]
         turn_status = [0, 0]
         gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
+        print("Stone Count : ", stone_cnt)
+        stone_cnt = 0
