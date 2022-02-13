@@ -241,7 +241,6 @@ color_status = (0, 1)
 
 while True:
     try:
-
         input_ready, write_ready, except_ready = select(input_list, [], [])
         for ir in input_ready:
             
@@ -266,6 +265,7 @@ while True:
                             ready_status[id] = 0
                             connectionSocket_list.remove(ir)
                         ir.close()
+                        print("connection closed by remote", ir.getsockname(), ir.getpeername())
                         input_list.remove(ir)
                         continue
 
@@ -281,6 +281,7 @@ while True:
                                 print("server is full")
                                 ir.send(make_bytes(CMD_CONNECT, 2, 2))
                                 ir.close()
+                                print("connection closed because of FULL", ir.getsockname(), ir.getpeername())
                                 input_list.remove(ir)
                             else:
                                 ir.send(make_bytes(CMD_CONNECT, len(connectionSocket_list), 1))
@@ -288,6 +289,7 @@ while True:
                         else:
                             ir.send(make_bytes(CMD_CONNECT, 2, 2))
                             ir.close()
+                            print("connection closed because no connect cmd", ir.getsockname(), ir.getpeername())
                             input_list.remove(ir)
                     
                     elif cmd == CMD_READY:
@@ -310,6 +312,7 @@ while True:
                 (connectionSocket, clientAddress) = serverSocket.accept()
                 connectionSocket.send(make_bytes(CMD_CONNECT, 2, 2))
                 connectionSocket.close()
+                print("connection closed because already start", ir.getsockname(), ir.getpeername())
                 
             else:
                 msg = ir.recv(BUF_SIZE)
@@ -323,14 +326,17 @@ while True:
                         ready_status = [0, 0]
                         connectionSocket_list.remove(ir)
                         ir.close()
+                        print("connection closed by remote", ir.getsockname(), ir.getpeername())
                         input_list.remove(ir)
                         for sock in connectionSocket_list:
                             sock.send(make_bytes(CMD_END, 1, 0))
                             sock.close()
+                            print("connection closed by another remote", sock.getsockname(), sock.getpeername())
                             input_list.remove(sock)
                     else:
                         ir.close()
                         input_list.remove(ir)
+                        print("connection closed because already start", ir.getsockname(), ir.getpeername())
                     continue
 
                 cmd, turn, data = int(msg[0]), int(msg[1]), int(msg[2])
@@ -345,10 +351,12 @@ while True:
                         connectionSocket_list.remove(ir)
                         ir.send(make_bytes(CMD_END, 0, 0))
                         ir.close()
+                        print("connection closed because end(error during first)", ir.getsockname(), ir.getpeername())
                         input_list.remove(ir)
                         for sock in connectionSocket_list:
                             sock.send(make_bytes(CMD_END, 1, 0))
                             sock.close()
+                            print("connection closed because end(error during first)", sock.getsockname(), sock.getpeername())
                             input_list.remove(sock)
                         is_start = False
                         connectionSocket_list = []
@@ -375,6 +383,7 @@ while True:
                             connectionSocket_list[int(not id)].send(data_not_id)
                             for sock in connectionSocket_list:
                                 sock.close()
+                                print("connection closed because end(someone win by error)", sock.getsockname(), sock.getpeername())
                                 input_list.remove(sock)
                             connectionSocket_list = []
                             is_start = False
@@ -391,6 +400,7 @@ while True:
                             connectionSocket_list[int(not id)].send(data_not_id)
                             for sock in connectionSocket_list:
                                 sock.close()
+                                print("connection closed because end(someone win)", sock.getsockname(), sock.getpeername())
                                 input_list.remove(sock)
                             connectionSocket_list = []
                             is_start = False
@@ -407,6 +417,7 @@ while True:
                             connectionSocket_list[int(not id)].send(data_not_id)
                             for sock in connectionSocket_list:
                                 sock.close()
+                                print("connection closed because end(time out)", sock.getsockname(), sock.getpeername())
                                 input_list.remove(sock)
                             connectionSocket_list = []
                             is_start = False
@@ -432,10 +443,12 @@ while True:
                     connectionSocket_list.remove(ir)
                     ir.send(make_bytes(CMD_END, 0, 0))
                     ir.close()
+                    print("connection closed because end(not put)", ir.getsockname(), ir.getpeername())
                     input_list.remove(ir)
                     for sock in connectionSocket_list:
                         sock.send(make_bytes(CMD_END, 1, 0))
                         sock.close()
+                        print("connection closed because end(other not put)", sock.getsockname(), sock.getpeername())
                         input_list.remove(sock)
                     
                     connectionSocket_list = []
@@ -450,6 +463,7 @@ while True:
         for ir in input_ready:
             if ir != serverSocket:
                 ir.close()
+                print("connection closed because error", ir.getsockname(), ir.getpeername())  
         input_list = [serverSocket]
         connectionSocket_list = []
         is_start = False
@@ -458,3 +472,4 @@ while True:
         gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
         print("Stone Count : ", stone_cnt)
         stone_cnt = 0
+
