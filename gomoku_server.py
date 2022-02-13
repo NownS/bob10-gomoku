@@ -459,12 +459,12 @@ while True:
                     print("Stone Count : ", stone_cnt)
                     stone_cnt = 0
 
-    except Exception:
+    except Exception as e:
         for ir in input_ready:
             if ir != serverSocket:
-                print("connection closed because error", ir.getsockname(), ir.getpeername())
+                print("connection closed because error")
                 ir.close()  
-        print("Error :", Exception)  
+        print("Error :", e)  
         input_list = [serverSocket]
         connectionSocket_list = []
         is_start = False
