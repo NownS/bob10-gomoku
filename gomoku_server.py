@@ -225,7 +225,12 @@ def handler(signal, frame):
 
 signal.signal(signal.SIGINT, handler)
 
-serverPort = 1234
+
+if len(sys.argv) != 1:
+    serverPort = sys.argv[1]
+else:
+    serverPort = 1234
+
 serverSocket = socket(AF_INET, SOCK_STREAM)
 serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 serverSocket.bind(('', serverPort))
@@ -463,7 +468,7 @@ while True:
         for ir in input_ready:
             if ir != serverSocket:
                 print("connection closed because error")
-                ir.close()  
+                ir.close()
         print("Error :", e)  
         input_list = [serverSocket]
         connectionSocket_list = []
