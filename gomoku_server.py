@@ -173,9 +173,11 @@ def someone_win(x_idx, y_idx, color_id):
             if candidate[i] == color_id:
                 length += 1
             else:
-                length_list.append(length)
-                length = 0
-        
+                if length:
+                    length_list.append(length)
+                    length = 0
+        if length:
+            length_list.append(length)
         if color_id == BLACK:
             try:
                 id = length_list.index(5)
