@@ -229,7 +229,7 @@ signal.signal(signal.SIGINT, handler)
 
 
 if len(sys.argv) != 1:
-    serverPort = sys.argv[1]
+    serverPort = int(sys.argv[1])
 else:
     serverPort = 1234
 
