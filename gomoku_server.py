@@ -191,6 +191,14 @@ def someone_win(x_idx, y_idx, color_id):
     return False
 
 
+def full():
+    for i in range(15):
+        for j in range(15):
+            if gomoku_map[i][j] == -1:
+                return False
+    return True
+
+
 def put(color_id, x, y):
 
     x_idx = x-1
@@ -210,6 +218,9 @@ def put(color_id, x, y):
     if someone_win(x_idx, y_idx, color_id):
         return [2, x, y]
     
+    if full():
+        return [4, x, y]
+
     return [0, x, y]
 
 
@@ -433,6 +444,24 @@ while True:
                             ready_status = [0, 0]
                             turn_status = [0, 0]
                             gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
+                            print("Stone Count : ", stone_cnt)
+                            stone_cnt = 0
+                        
+                        elif ret[0] == 4:  # draw
+                            data_id = make_bytes(CMD_END, 0, 2)
+                            data_not_id = make_bytes(CMD_END, 0, 2)
+                            connectionSocket_list[id].send(data_id)
+                            connectionSocket_list[int(not id)].send(data_not_id)
+                            for sock in connectionSocket_list:
+                                print("connection closed because end(draw)", sock.getsockname(), sock.getpeername())
+                                sock.close()
+                                input_list.remove(sock)
+                            connectionSocket_list = []
+                            is_start = False
+                            ready_status = [0, 0]
+                            turn_status = [0, 0]
+                            gomoku_map = [[-1 for _ in range(15)] for _ in range(15)]
+                            print("last point:", "[{}, {}]".format(ret[1], ret[2]))
                             print("Stone Count : ", stone_cnt)
                             stone_cnt = 0
 
