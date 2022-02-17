@@ -392,7 +392,7 @@ while True:
                             ret = put(color_status[id], x, y)
                         
                         if math.floor(end - start) < 3:
-                            time.sleep(3 - (end - start))
+                            time.sleep(2 - (end - start))
                         
                         if ret[0] == 1:    # error
                             data_id = make_bytes(CMD_END, 0, 0)
